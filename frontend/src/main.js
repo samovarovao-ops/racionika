@@ -5,6 +5,7 @@ let lastCalcResult = null;
 let selectedDayTab = null;
 let adminToken = null;
 let people = [{ program: 'Classic', type: 'adult' }];
+let demoMode = false;
 
 const PROGRAMS = { Classic: '\u041a\u043b\u0430\u0441\u0441\u0438\u043a\u0430', Balance: '\u0411\u0430\u043b\u0430\u043d\u0441', Vegan: '\u0412\u0435\u0433\u0430\u043d' };
 const PROGRAM_ICONS = { Classic: '\ud83c\udf5d', Balance: '\ud83e\udd57', Vegan: '\ud83e\udd6c' };
@@ -14,7 +15,17 @@ const MEAL_ICONS = { '\u0417\u0430\u0432\u0442\u0440\u0430\u043a': '\u2615', '\u
 const $ = s => document.querySelector(s);
 const fmt = v => Math.round(v).toLocaleString('ru-RU');
 
-function init() {
+async function checkBackend() {
+  try {
+    const r = await fetch(API + '/health', { signal: AbortSignal.timeout(3000) });
+    if (r.ok) { demoMode = false; return; }
+  } catch {}
+  demoMode = true;
+  console.log('Backend unavailable, running in demo mode');
+}
+
+async function init() {
+  await checkBackend();
   handleRoute();
   window.addEventListener('hashchange', handleRoute);
 }
@@ -34,7 +45,9 @@ function handleRoute() {
 
 function renderWelcomePage() {
   const app = $('#app');
+  const demoBanner = demoMode ? '<div class="demo-banner">Демо-режим: используются тестовые данные</div>' : '';
   app.innerHTML =
+    demoBanner +
     '<div class="welcome-page">' +
       '<div class="welcome-card">' +
         '<div class="welcome-emoji">\ud83c\udf7d\ufe0f</div>' +
@@ -66,6 +79,10 @@ async function loadShareResult(token) {
 }
 
 async function loadLatestMenu() {
+  if (demoMode) {
+    currentMenuId = DEMO_MENU.menu_id;
+    return { menu_id: DEMO_MENU.menu_id, version: DEMO_MENU.version };
+  }
   try {
     const r = await fetch(API + '/latest-menu');
     if (!r.ok) return null;
@@ -77,7 +94,8 @@ async function loadLatestMenu() {
 
 function renderCalcPage() {
   const app = $('#app');
-  app.innerHTML = '<header class="header"><h1>\ud83c\udf5d \u0420\u0430\u0446\u0438\u043e\u043d\u0438\u043a\u0430</h1><nav><a href="#/">\u0413\u043b\u0430\u0432\u043d\u0430\u044f</a> <a href="#/admin">\u0410\u0434\u043c\u0438\u043d</a></nav></header><div id="content" class="content"><div class="loading">\u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430 \u043c\u0435\u043d\u044e...</div></div>';
+  const demoBanner = demoMode ? '<div class="demo-banner">Демо-режим: используются тестовые данные</div>' : '';
+  app.innerHTML = demoBanner + '<header class="header"><h1>\ud83c\udf5d \u0420\u0430\u0446\u0438\u043e\u043d\u0438\u043a\u0430</h1><nav><a href="#/">\u0413\u043b\u0430\u0432\u043d\u0430\u044f</a> <a href="#/admin">\u0410\u0434\u043c\u0438\u043d</a></nav></header><div id="content" class="content"><div class="loading">\u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430 \u043c\u0435\u043d\u044e...</div></div>';
   loadLatestMenu().then(menu => {
     if (!menu) { $('#content').innerHTML = '<div class="error">\u041c\u0435\u043d\u044e \u043d\u0435 \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043d\u043e. \u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 \u0444\u0430\u0439\u043b \u0432 \u0430\u0434\u043c\u0438\u043d\u043a\u0435.</div>'; return; }
     renderCalcForm();
@@ -138,9 +156,14 @@ async function doCalc(e) {
   const resultArea = $('#result-area');
   resultArea.innerHTML = '<div class="loading">\u0420\u0430\u0441\u0447\u0451\u0442...</div>';
   try {
-    const r = await fetch(API + '/calc', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    if (!r.ok) { const err = await r.json(); throw new Error(err.detail || '\u041e\u0448\u0438\u0431\u043a\u0430'); }
-    const data = await r.json();
+    let data;
+    if (demoMode) {
+      data = demoCalc(groups, days, startDay);
+    } else {
+      const r = await fetch(API + '/calc', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (!r.ok) { const err = await r.json(); throw new Error(err.detail || '\u041e\u0448\u0438\u0431\u043a\u0430'); }
+      data = await r.json();
+    }
     lastCalcResult = data;
     selectedDayTab = 0;
     renderResult(data, resultArea);

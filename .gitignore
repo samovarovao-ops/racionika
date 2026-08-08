@@ -17,6 +17,7 @@ node_modules/
 # Storage (user data)
 storage/menus/
 storage/results.json
+storage/orders.json
 
 # Logs
 logs/
