@@ -312,6 +312,10 @@ function renderDayDetail(data, dayIdx) {
 
 async function downloadPDF() {
   if (!lastCalcResult) return;
+  if (demoMode) {
+    alert('PDF-отчёт доступен только при подключённом бэкенде. Запустите приложение локально для полной функциональности.');
+    return;
+  }
   const body = {
     menu_id: lastCalcResult.menu_id,
     groups: lastCalcResult.groups.map(g => ({ program: g.program, adults: g.adults, children: g.children })),
