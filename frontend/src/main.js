@@ -312,7 +312,7 @@ function renderDayDetail(data, dayIdx) {
 
 async function downloadPDF() {
   if (!lastCalcResult) return;
-  const { jsPDF } = await import('https://cdn.jsdelivr.net/npm/jspdf@1.5.3/dist/jspdf.min.js');
+  if (typeof jsPDF === 'undefined') { alert('PDF library not loaded. Check your internet connection.'); return; }
   const doc = new jsPDF();
   const data = lastCalcResult;
   let y = 15;
@@ -380,6 +380,10 @@ function shareToTelegram() {
 
 async function createWebOrder() {
   if (!lastCalcResult) return;
+  if (demoMode) {
+    alert('Order creation is only available with a connected backend. Run the app locally for full functionality.');
+    return;
+  }
   const body = {
     menu_id: lastCalcResult.menu_id,
     groups: lastCalcResult.groups.map(g => ({ program: g.program, adults: g.adults, children: g.children })),
