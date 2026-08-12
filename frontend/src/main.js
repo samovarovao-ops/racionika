@@ -312,24 +312,64 @@ function renderDayDetail(data, dayIdx) {
 
 async function downloadPDF() {
   if (!lastCalcResult) return;
-  if (demoMode) {
-    alert('PDF-отчёт доступен только при подключённом бэкенде. Запустите приложение локально для полной функциональности.');
-    return;
+  const { jsPDF } = await import('https://cdn.jsdelivr.net/npm/jspdf@1.5.3/dist/jspdf.min.js');
+  const doc = new jsPDF();
+  const data = lastCalcResult;
+  let y = 15;
+
+  doc.setFontSize(16);
+  doc.text('Racionika', 105, y, { align: 'center' });
+  y += 8;
+  doc.setFontSize(10);
+  doc.text('Programs: ' + data.groups.map(g => g.program).join(', '), 105, y, { align: 'center' });
+  y += 6;
+  doc.text('Days: ' + data.days, 105, y, { align: 'center' });
+  y += 12;
+
+  data.groups.forEach((g, i) => {
+    if (y > 260) { doc.addPage(); y = 15; }
+    doc.setFontSize(12);
+    doc.text('#' + (i + 1) + ' ' + g.program + (g.children > 0 ? ' (child)' : ''), 10, y);
+    doc.text(g.kit_price + ' RUB', 200, y, { align: 'right' });
+    y += 10;
+
+    g.plan.forEach(day => {
+      if (y > 260) { doc.addPage(); y = 15; }
+      doc.setFontSize(10);
+      doc.text('Day ' + day['\u0414\u0435\u043d\u044c'], 14, y);
+      y += 7;
+
+      const mealOrder = ['\u0417\u0430\u0432\u0442\u0440\u0430\u043a', '\u041e\u0431\u0435\u0434', '\u0423\u0436\u0438\u043d', '\u041f\u0435\u0440\u0435\u043a\u0443\u0441'];
+      day['\u043f\u0440\u0438\u0451\u043c\u044b'].forEach(priem => {
+        doc.setFontSize(9);
+        doc.text(priem['\u041f\u0440\u0438\u0451\u043c'], 18, y);
+        y += 5;
+        priem['\u0431\u043b\u044e\u0434\u0430'].forEach(b => {
+          if (y > 270) { doc.addPage(); y = 15; }
+          doc.setFontSize(8);
+          doc.text(b['\u041d\u0430\u0437\u0432\u0430\u043d\u0438\u0435_\u0431\u043b\u044e\u0434\u0430'] + ' - ' + b['\u0421\u0442\u043e\u0438\u043c\u043e\u0441\u0442\u044c_\u0441\u0442\u0440\u043e\u043a\u0438'] + ' RUB', 22, y);
+          y += 4;
+        });
+        y += 2;
+      });
+      doc.setFontSize(8);
+      doc.text('Day total: ' + day['\u0434\u043d\u0435\u0432\u043d\u0430\u044f_\u0441\u0442\u043e\u0438\u043c\u043e\u0441\u0442\u044c'] + ' RUB', 180, y, { align: 'right' });
+      y += 6;
+    });
+    y += 4;
+  });
+
+  if (y > 250) { doc.addPage(); y = 15; }
+  doc.setFontSize(11);
+  doc.text('Total: ' + data.total_kit_price + ' RUB', 10, y);
+  y += 7;
+  if (data.discount_amount > 0) {
+    doc.text('Discount (' + data.discount_percent + '%): -' + data.discount_amount + ' RUB', 10, y);
+    y += 7;
+    doc.text('Final: ' + data.final_price + ' RUB', 10, y);
   }
-  const body = {
-    menu_id: lastCalcResult.menu_id,
-    groups: lastCalcResult.groups.map(g => ({ program: g.program, adults: g.adults, children: g.children })),
-    days: lastCalcResult.days,
-    start_day: lastCalcResult.start_day,
-  };
-  try {
-    const r = await fetch(API + '/generate-pdf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    const blob = await r.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'racionika_report.pdf'; a.click();
-    URL.revokeObjectURL(url);
-  } catch (err) { alert('\u041e\u0448\u0438\u0431\u043a\u0430 \u0433\u0435\u043d\u0435\u0440\u0430\u0446\u0438\u0438 PDF: ' + err.message); }
+
+  doc.save('racionika_report.pdf');
 }
 
 function shareToTelegram() {
