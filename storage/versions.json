@@ -1,0 +1,35 @@
+{
+  "versions": [
+    {
+      "menu_id": "29a67cfd229a",
+      "version": 4,
+      "filename": "m.xlsx",
+      "file_path": "C:\\Users\\Ольга\\OneDrive\\Dokumente\\Food delivery service\\storage\\menus\\29a67cfd229a_v4.xlsx",
+      "row_count": 84,
+      "errors": [],
+      "warnings": [],
+      "timestamp": 1785750047.0412116
+    },
+    {
+      "menu_id": "c44a1084c145",
+      "version": 4,
+      "filename": "sample_menu.xlsx",
+      "file_path": "C:\\Users\\Ольга\\OneDrive\\Dokumente\\Food delivery service\\storage\\menus\\c44a1084c145_v4.xlsx",
+      "row_count": 84,
+      "errors": [],
+      "warnings": [],
+      "timestamp": 1785835804.975346
+    },
+    {
+      "menu_id": "411e4adfe311",
+      "version": 4,
+      "filename": "sample_menu.xlsx",
+      "file_path": "C:\\Users\\Ольга\\OneDrive\\Dokumente\\Food delivery service\\storage\\menus\\411e4adfe311_v4.xlsx",
+      "row_count": 84,
+      "errors": [],
+      "warnings": [],
+      "timestamp": 1785916730.0347562
+    }
+  ],
+  "latest_id": "411e4adfe311"
+}
